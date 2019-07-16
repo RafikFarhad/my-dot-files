@@ -92,7 +92,10 @@ else
 	echo -e "\nNot backing up old dotfiles."
 fi
 
+cp $(pwd)/legacy/.service_manager.sh ~
+cp $(pwd)/legacy/.bash_aliases.sh ~
 printf "source '$(pwd)/zshrc.conf'" > ~/.zshrc
+printf "source '~/.bash_aliases'" > ~/.zshrc
 printf "source $(pwd)/vimrc.vim" > ~/.vimrc
 printf "source-file '$(pwd)/tmux.conf'" > ~/.tmux.conf
 
@@ -113,14 +116,10 @@ tmux set-environment -g TMUX_PLUGIN_MANAGER_PATH "~/.tmux/plugins"
 "$HOME"/.tmux/plugins/tpm/bin/install_plugins || true
 tmux kill-session -t __noop >/dev/null 2>&1 || true
 
-echo "Loading Alias List"
-bash <(wget -qO- https://raw.githubusercontent.com/RafikFarhad/easy-ubuntu-dev-setup/master/terminal_alias_helper.sh)
-
 echo "Installing ZSH Plugins"
 git clone https://github.com/zsh-users/zsh-completions ~/.oh-my-zsh/custom/plugins/zsh-completions
 git clone https://github.com/zsh-users/zsh-syntax-highlighting.git  ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
 git clone https://github.com/zsh-users/zsh-autosuggestions ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions
-
 
 
 echo
