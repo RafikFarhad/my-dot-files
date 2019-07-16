@@ -94,8 +94,7 @@ fi
 
 cp $(pwd)/legacy/.service_manager.sh ~
 cp $(pwd)/legacy/.bash_aliases.sh ~
-printf "source '$(pwd)/zshrc.conf'" > ~/.zshrc
-printf "source '~/.bash_aliases'" > ~/.zshrc
+printf "source '$(pwd)/zshrc.conf' \nsource .bash_aliases" > ~/.zshrc
 printf "source $(pwd)/vimrc.vim" > ~/.vimrc
 printf "source-file '$(pwd)/tmux.conf'" > ~/.tmux.conf
 
