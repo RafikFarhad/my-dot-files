@@ -93,8 +93,10 @@ else
 fi
 
 cp $(pwd)/legacy/.service_manager.sh ~
-cp $(pwd)/legacy/.bash_aliases.sh ~
-printf "source '$(pwd)/zshrc.conf' \nsource .bash_aliases" > ~/.zshrc
+cp $(pwd)/legacy/.bash_aliases ~
+mkdir .tmux
+cp $(pwd)/legacy/yank.sh ~/.tmux/
+printf "source '$(pwd)/zshrc.conf' \nsource $HOME/.bash_aliases" > ~/.zshrc
 printf "source $(pwd)/vimrc.vim" > ~/.vimrc
 printf "source-file '$(pwd)/tmux.conf'" > ~/.tmux.conf
 
