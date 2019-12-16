@@ -97,7 +97,8 @@ else
 	echo "\n${YELLOW}Not backing up old dotfiles $NORMAL"
 fi
 
-cp $(pwd)/legacy/.service_manager.sh $HOME
+mkdir ~/helper
+cp $(pwd)/legacy/service_manager.sh $HOME/helper
 cp $(pwd)/legacy/.bash_aliases $HOME
 
 printf "source $(pwd)/zshrc.conf \nsource $HOME/.bash_aliases" >$HOME/.zshrc
