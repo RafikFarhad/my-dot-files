@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash -
 
 current=$(xdotool get_desktop)
 go=$1
