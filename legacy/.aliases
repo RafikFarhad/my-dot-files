@@ -1,15 +1,14 @@
-function homestead() {
-    ( cd ~/Homestead && vagrant $* )
-}
-
-function enter() {
+function dbash() {
     ( docker exec -it $* bash )
 }
 
-alias vu='homestead up'
-alias vs='homestead ssh'
-alias vh='homestead halt'
-alias vp='homestead reload --provision'
+function dsh() {
+    ( docker exec -it $* sh )
+}
+
+#function dlog() {
+#    ( docker exec -it $1 sh $?)
+#}
 
 alias gss='git status'
 alias ga='git add --all'
@@ -20,9 +19,8 @@ alias gpl='git pull'
 alias gct='git checkout'
 
 alias pp='cd ~/playground'
-alias hh='cd ~/playground'
-alias ii='cd ~/playground/infancy'
 alias de='cd ~/Desktop'
+alias dc='cd ~/Documents'
 
 alias cu='composer update'
 alias cdu='composer dump-autoload'
@@ -30,6 +28,7 @@ alias pa='php artisan'
 alias pacc='php artisan config:cache'
 alias pakg='php artisan key:generate'
 
+alias dc='docker-compose'
 alias dcu='docker-compose up -d'
 alias dcs='docker-compose stop'
 alias dcd='docker-compose down'
@@ -38,10 +37,5 @@ alias dps='docker ps'
 alias dim='docker image'
 alias dst='docker stop'
 alias drm='docker rm'
-
-alias start='sudo bash ~/helper/service_manager.sh start'
-alias stop='sudo bash ~/helper/service_manager.sh stop'
-alias reload='sudo bash ~/helper/service_manager.sh reload'
-alias restart='sudo bash ~/helper/service_manager.sh restart'
 
 alias sv='sudo vim'
