@@ -19,11 +19,8 @@
 - Ubuntu
 - MacOs
 
-### 
+### Setup
 
-1. Clone the repoin the home directory:
 ```
-git clone https://github.com/RafikFarhad/my-dot-files.git $HOME/.my-dot-files
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/RafikFarhad/my-dot-files/master/deploy.sh)"
 ```
-
-2. Go to the directory
