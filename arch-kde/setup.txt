@@ -1,7 +1,0 @@
-git clone git@github.com:RafikFarhad/my-dot-files.git
-
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-
-git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim
-
-ln -s /home/farhad/my-dot-files/theme/agnosterzak-forked.zsh-theme /home/farhad/.oh-my-zsh/custom/themes/agnosterzak-forked.zsh-theme
