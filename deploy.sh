@@ -8,7 +8,7 @@ BLINK="\e[0;40;5m"
 DOT_FOLDER=""
 
 clone_repo() {
-	if ! test -d "$1" ; then
+	if ! test -d $DOT_FOLDER ; then
 		git clone https://github.com/RafikFarhad/my-dot-files.git $DOT_FOLDER
 	else
 		git -C $DOT_FOLDER pull
@@ -168,7 +168,7 @@ main() {
 		exit 0
 	fi
 
-	DOT_FOLDER="${2:-${HOME}/.my-dot-files}"
+	DOT_FOLDER="${1:-${HOME}/.my-dot-files}"
 
 	clone_repo
 
@@ -197,7 +197,7 @@ main() {
 	printf "${BLINK}${YELLOW}Log out and log back in to apply the new conf files$NORMAL\n"
 }
 
-main
+main $@
 # for clbg in {40..47} {100..107} 49 ; do
 #         #Foreground
 #         for clfg in {30..37} {90..97} 39 ; do
