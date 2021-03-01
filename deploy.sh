@@ -1,3 +1,5 @@
+#!/bin/sh
+
 YELLOW="\e[0;40;93m"
 RED="\e[0;40;91m"
 NORMAL="\e[0;40;0m"
@@ -7,8 +9,38 @@ PURPLE="\e[0;40;96m"
 BLINK="\e[0;40;5m"
 DOT_FOLDER=""
 
+dot_file_location() {
+	read -p "Where should be the dot-files? (default: "$HOME/.my-dot-files") " INP
+	DOT_FOLDER=${INP:-"$HOME/.my-dot-files"}
+	if [[ "$DOT_FOLDER" == *"~"* ]]; then
+		printf "${RED}\"~\" is not allowed${NORMAL}\n"
+		exit 1
+	fi
+	if [[ "$DOT_FOLDER" == *"\$"* ]]; then
+		printf "${RED}\"\$\" is not allowed${NORMAL}\n"
+		exit 1
+	fi
+	# checking if a git folder
+	if test -d $DOT_FOLDER/.git; then
+		EXISTING_REPO_NAME=$(basename -s ".git" $(git -C "$DOT_FOLDER" config --get remote.origin.url))
+		# checking if git repo is same as dot files
+		if [ "$EXISTING_REPO_NAME" = "my-dot-files" ]; then
+			printf "${YELLOW}Already cloned the dot files repo${NORMAL}\n"
+			return
+		else
+			printf "${RED}Given folder is occupied with another git repository${NORMAL}\n"
+			exit 1
+		fi
+	fi
+	if test -d $DOT_FOLDER; then
+		printf "${RED}Folder exists${NORMAL}\n"
+		printf "${RED}Dot files location is occupied${NORMAL}\n"
+		exit 1
+	fi
+}
+
 clone_repo() {
-	if ! test -d $DOT_FOLDER ; then
+	if ! test -d $DOT_FOLDER; then
 		git clone https://github.com/RafikFarhad/my-dot-files.git $DOT_FOLDER
 	else
 		git -C $DOT_FOLDER pull
@@ -60,7 +92,7 @@ check_default_shell() {
 
 backup_conf() {
 	printf "${NORMAL}\n"
-	read -p "Would you like to backup your current dotfiles? (yes/no) (default: no)" INP
+	read -p "Would you like to backup your current dotfiles? (yes/no) (default: no) " INP
 	INP="${INP:-no}"
 	if ! ([ "$INP" = "yes" ] || [ "$INP" = "YES" ]); then
 		printf "${RED}Not backing up old dotfiles $NORMAL\n"
@@ -161,14 +193,14 @@ main() {
 	echo "->  Try to install missing packages"
 	echo "->  Make the default shell to ZSH"
 	printf "${NORMAL}\n"
-	read -p "Get started? (yes/no) (default: yes)" INP
+	read -p "Get started? (yes/no) (default: yes) " INP
 	INP="${INP:-yes}"
 	if ! ([ "$INP" = "yes" ] || [ "$INP" = "YES" ]); then
 		echo "Quitting, nothing was changed."
 		exit 0
 	fi
 
-	DOT_FOLDER="${1:-${HOME}/.my-dot-files}"
+	dot_file_location
 
 	clone_repo
 

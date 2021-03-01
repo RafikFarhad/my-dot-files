@@ -24,3 +24,9 @@
 ```
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/RafikFarhad/my-dot-files/master/deploy.sh)"
 ```
+
+### Screenshot
+
+![Screenshot 1](screenshot/ss1.png?raw=true "Basic terminal with tmux")
+
+![Screenshot 2](screenshot/ss2.png?raw=true "Basic vim interfacex")
