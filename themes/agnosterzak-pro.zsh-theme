@@ -220,7 +220,7 @@ prompt_git() {
       if [[ $bgclr == 'red' || $bgclr == 'magenta' ]] then
         to_push=" $fg_bold[white]↑$commits_ahead$fg_bold[$fgclr]"
       else
-        to_push=" $fg_bold[black]↑$commits_ahead$fg_bold[$fgclr]"
+        to_push=" $fg_bold[cyan]↑$commits_ahead$fg_bold[$fgclr]"
       fi
     fi
     if [[ $has_diverged == false && $commits_behind -gt 0 ]]; then to_pull=" $fg_bold[magenta]↓$commits_behind$fg_bold[$fgclr]"; fi
@@ -239,51 +239,21 @@ prompt_git() {
   fi
 }
 
-prompt_hg() {
-  local rev status
-  if $(hg id >/dev/null 2>&1); then
-    if $(hg prompt >/dev/null 2>&1); then
-      if [[ $(hg prompt "{status|unknown}") = "?" ]]; then
-        # if files are not added
-        prompt_segment red white
-        st='±'
-      elif [[ -n $(hg prompt "{status|modified}") ]]; then
-        # if any modification
-        prompt_segment yellow black
-        st='±'
-      else
-        # if working copy is clean
-        prompt_segment green black
-      fi
-      print -n $(hg prompt "☿ {rev}@{branch}") $st
-    else
-      st=""
-      rev=$(hg id -n 2>/dev/null | sed 's/[^-0-9]//g')
-      branch=$(hg id -b 2>/dev/null)
-      if `hg st | grep -q "^\?"`; then
-        prompt_segment red black
-        st='±'
-      elif `hg st | grep -q "^[MA]"`; then
-        prompt_segment yellow black
-        st='±'
-      else
-        prompt_segment green black
-      fi
-      print -n "☿ $rev@$branch" $st
-    fi
-  fi
-}
-
 # Dir: current working directory
 prompt_dir() {
   prompt_segment red white "%{$fg_bold[white]%}%~%{$fg_no_bold[white]%}"
+}
+
+# Current architecture
+prompt_arch() {
+  prompt_segment NONE green "%{$fg_bold[$fgclr]%}$(uname -m)"
 }
 
 # Virtualenv: current working virtualenv
 prompt_virtualenv() {
   local virtualenv_path="$VIRTUAL_ENV"
   if [[ -n $virtualenv_path && -n $VIRTUAL_ENV_DISABLE_PROMPT ]]; then
-    prompt_segment blue black "(`basename $virtualenv_path`)"
+    prompt_segment blue white "(`basename $virtualenv_path`)"
   fi
 }
 
@@ -310,12 +280,13 @@ build_prompt() {
   RETVAL=$?
   print -n "\n"
   prompt_status
-  prompt_battery
-  #prompt_time
+  # prompt_battery
+  # prompt_time
   prompt_virtualenv
   prompt_dir
+  prompt_arch
   prompt_git
-#  prompt_hg
+  # prompt_hg
   prompt_end
   CURRENT_BG='NONE'
   print -n "\n"
