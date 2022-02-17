@@ -151,11 +151,6 @@ zsh_plugin_setup() {
 	else
 		git -C "$HOME/.oh-my-zsh/custom/plugins/zsh-completions" pull
 	fi
-	if ! test -d "$HOME/.oh-my-zsh/custom/plugins/zsh-completions"; then
-		git clone https://github.com/zsh-users/zsh-completions $HOME/.oh-my-zsh/custom/plugins/zsh-completions
-	else
-		git -C "$HOME/.oh-my-zsh/custom/plugins/zsh-completions" pull
-	fi
 	if ! test -d $HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting; then
 		git clone https://github.com/zsh-users/zsh-syntax-highlighting.git $HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
 	else

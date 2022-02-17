@@ -29,4 +29,4 @@ sh -c "$(curl -fsSL https://raw.githubusercontent.com/RafikFarhad/my-dot-files/m
 
 ![Screenshot 1](screenshot/ss1.png?raw=true "Basic terminal with tmux")
 
-![Screenshot 2](screenshot/ss2.png?raw=true "Basic vim interfacex")
+![Screenshot 2](screenshot/ss2.png?raw=true "Basic vim interface")

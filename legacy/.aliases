@@ -6,9 +6,9 @@ function dsh() {
     ( docker exec -it $* sh )
 }
 
-#function dlog() {
-#    ( docker exec -it $1 sh $?)
-#}
+function dlog() {
+   ( docker logs $*)
+}
 
 alias gss='git status'
 alias ga='git add --all'
@@ -18,17 +18,14 @@ alias gp='git push'
 alias gpl='git pull'
 alias gct='git checkout'
 
-alias pp='cd ~/playground'
+alias pp='cd ~/apollo'
 alias de='cd ~/Desktop'
 alias dc='cd ~/Documents'
+alias dd='cd ~/Downloads'
 
-alias cu='composer update'
-alias cdu='composer dump-autoload'
 alias pa='php artisan'
-alias pacc='php artisan config:cache'
-alias pakg='php artisan key:generate'
 
-alias dc='docker-compose'
+alias dcc='docker-compose'
 alias dcu='docker-compose up -d'
 alias dcs='docker-compose stop'
 alias dcd='docker-compose down'
@@ -39,3 +36,4 @@ alias dst='docker stop'
 alias drm='docker rm'
 
 alias sv='sudo vim'
+alias kk='kubectl'
