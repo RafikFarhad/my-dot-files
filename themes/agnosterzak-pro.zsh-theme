@@ -36,6 +36,8 @@ CROSS="\u2718"
 LIGHTNING="\u26a1"
 GEAR="\u2699"
 GIT_SEPARATOR="\u26e4"
+# More colors
+BG_BLACK="\u001b[40;1m"
 
 # Begin a segment
 # Takes two arguments, background and foreground. Both can be omitted,
@@ -241,12 +243,12 @@ prompt_git() {
 
 # Dir: current working directory
 prompt_dir() {
-  prompt_segment red white "%{$fg_bold[white]%}%~%{$fg_no_bold[white]%}"
+  prompt_segment $BG_BLACK black "%{$fg_bold[white]%}%~%{$fg_no_bold[white]%}"
 }
 
 # Current architecture
 prompt_arch() {
-  prompt_segment NONE green "%{$fg_bold[$fgclr]%}$(uname -m)"
+  prompt_segment NONE blue "%{$fg_bold[$fgclr]%}$(uname -m)"
 }
 
 # Virtualenv: current working virtualenv
