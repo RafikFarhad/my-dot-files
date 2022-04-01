@@ -264,16 +264,15 @@ prompt_time() {
 }
 
 # Status:
-# - was there an error
+# - the last task exit code
 # - am I root
 # - are there background jobs?
 prompt_status() {
   local symbols
   symbols=()
-  [[ $RETVAL -ne 0 ]] && symbols+="%{%F{red}%}$CROSS"
+  symbols+="%{%F{cyan}%}$RETVAL"
   [[ $UID -eq 0 ]] && symbols+="%{%F{yellow}%}$LIGHTNING"
   [[ $(jobs -l | wc -l) -gt 0 ]] && symbols+="%{%F{cyan}%}$GEAR"
-
   [[ -n "$symbols" ]] && prompt_segment black default "$symbols"
 }
 
