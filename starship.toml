@@ -1,0 +1,105 @@
+# https://ahadsheriff.medium.com/developers-this-is-what-you-should-install-on-your-new-m1-mac-d90cd365c380
+format = """
+$username\
+$hostname\
+$localip\
+$directory\
+$git_branch\
+$git_commit\
+$git_state\
+$git_metrics\
+$git_status\
+$docker_context\
+$helm\
+$nodejs\
+$python\
+$ruby\
+$terraform\
+$memory_usage\
+$gcloud\
+$env_var\
+$custom\
+$sudo\
+$cmd_duration\
+$fill\
+$jobs\
+$time\
+$line_break\
+$status\
+$container\
+$shell\
+$character"""
+
+continuation_prompt = "▶▶ "
+
+[directory]
+truncation_symbol = "…/"
+
+[cmd_duration]
+format = '\[[⏱ $duration]($style)\]'
+
+[docker_context]
+format = '\[[$symbol$context]($style)\]'
+
+[gcloud]
+format = '\[[$symbol$account(@$domain)(\($region\))]($style)\]'
+disabled = true
+
+[git_branch]
+format = '\[[$symbol$branch]($style)\]'
+
+[git_status]
+format = '([\[$all_status$ahead_behind\]]($style))'
+
+[golang]
+format = '\[[$symbol($version)]($style)\]'
+
+[helm]
+format = '\[[$symbol($version)]($style)\]'
+
+[java]
+format = '\[[$symbol($version)]($style)\]'
+
+[kubernetes]
+format = '\[[⛵️($cluster)](green)\]'
+disabled = false
+# detect_files = ['yml']
+
+[memory_usage]
+format = '\[$symbol[$ram( | $swap)]($style)\]'
+
+
+[nodejs]
+format = '\[[$symbol($version)]($style)\]'
+
+[php]
+format = '\[[$symbol($version)]($style)\]'
+
+[python]
+format = '\[[${symbol}${pyenv_prefix}(${version})(\($virtualenv\))]($style)\]'
+
+[ruby]
+format = '\[[$symbol($version)]($style)\]'
+
+[rust]
+format = '\[[$symbol($version)]($style)\]'
+
+[status]
+disabled = false
+map_symbol = true
+
+[sudo]
+format = '\[$symbol\]'
+disabled = false
+
+[terraform]
+format = '\[[$symbol$workspace]($style)\]'
+
+[time]
+format = '\[[$time]($style)\]'
+disabled = false
+time_format = "%v %r"
+
+[username]
+format = '\[[$user]($style)\]'
+

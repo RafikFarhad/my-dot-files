@@ -285,7 +285,7 @@ build_prompt() {
   # prompt_time
   prompt_virtualenv
   prompt_dir
-  prompt_arch
+  # prompt_arch
   prompt_git
   # prompt_hg
   prompt_end

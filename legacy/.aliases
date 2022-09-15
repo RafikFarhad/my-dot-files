@@ -36,7 +36,9 @@ alias dim='docker image'
 alias dst='docker stop'
 alias drm='docker rm'
 
-alias sv='sudo vim'
 alias kk='kubectl'
+alias gg='gcloud'
 
-alias ip='curl -s -4 icanhazip.com'
+alias public_ip='curl -s -4 icanhazip.com'
+
+alias init_starship='eval "$(starship init zsh)"'
