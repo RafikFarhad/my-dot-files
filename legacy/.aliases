@@ -1,13 +1,21 @@
+#  open bash in docker
 function dbash() {
     ( docker exec -it $* bash )
 }
 
+# open sh in docker
 function dsh() {
     ( docker exec -it $* sh )
 }
 
+# see docker logs
 function dlog() {
    ( docker logs $*)
+}
+
+# see k8s secret
+function see() {
+    eval "$* -o json | jq '.data | map_values(@base64d)'"
 }
 
 alias gss='git status'
@@ -37,6 +45,20 @@ alias dst='docker stop'
 alias drm='docker rm'
 
 alias kk='kubectl'
+alias kkcfg='kubectl config'
+alias kkgp='kubectl get pod'
+alias kkdp='kubectl describe pod'
+alias kkgs='kubectl get service'
+alias kkds='kubectl describe service'
+alias kkgi='kubectl get ingress'
+alias kkdi='kubectl describe ingress'
+alias kkgsec='kubectl get secret'
+alias kkdsec='kubectl describe secret'
+alias kkgc='kubectl get configmap'
+alias kkdc='kubectl describe configmap'
+alias kkgdep='kubectl get deployment'
+alias kkddep='kubectl describe deployment'
+
 alias gg='gcloud'
 
 alias public_ip='curl -s -4 icanhazip.com'

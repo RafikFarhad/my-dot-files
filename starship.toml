@@ -1,5 +1,10 @@
 # https://ahadsheriff.medium.com/developers-this-is-what-you-should-install-on-your-new-m1-mac-d90cd365c380
 format = """
+$kubernetes\
+$gcloud\
+$fill\
+$time\
+$line_break\
 $username\
 $hostname\
 $localip\
@@ -16,14 +21,11 @@ $python\
 $ruby\
 $terraform\
 $memory_usage\
-$gcloud\
 $env_var\
 $custom\
 $sudo\
 $cmd_duration\
-$fill\
 $jobs\
-$time\
 $line_break\
 $status\
 $container\
@@ -42,8 +44,8 @@ format = '\[[⏱ $duration]($style)\]'
 format = '\[[$symbol$context]($style)\]'
 
 [gcloud]
-format = '\[[$symbol$account(@$domain)(\($region\))]($style)\]'
-disabled = true
+format = '\[[$symbol$project]($style)\]'
+disabled = false
 
 [git_branch]
 format = '\[[$symbol$branch]($style)\]'
@@ -61,28 +63,33 @@ format = '\[[$symbol($version)]($style)\]'
 format = '\[[$symbol($version)]($style)\]'
 
 [kubernetes]
-format = '\[[⛵️($cluster)](green)\]'
+format = '\[[$symbol ($cluster)](green)\]'
+symbol = "⛵️"
 disabled = false
-# detect_files = ['yml']
+# detect_folders = ['helm', 'kubernetes']
 
 [memory_usage]
 format = '\[$symbol[$ram( | $swap)]($style)\]'
 
-
 [nodejs]
 format = '\[[$symbol($version)]($style)\]'
+disabled = true
 
 [php]
 format = '\[[$symbol($version)]($style)\]'
+disabled = true
 
 [python]
 format = '\[[${symbol}${pyenv_prefix}(${version})(\($virtualenv\))]($style)\]'
+disabled = false
 
 [ruby]
 format = '\[[$symbol($version)]($style)\]'
+disabled = true
 
 [rust]
 format = '\[[$symbol($version)]($style)\]'
+disabled = true
 
 [status]
 disabled = false
@@ -102,4 +109,5 @@ time_format = "%v %r"
 
 [username]
 format = '\[[$user]($style)\]'
-
+show_always = false
+disabled = true
