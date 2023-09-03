@@ -1,0 +1,4 @@
+# $XDG_CONFIG_HOME/k9s/alias.yml
+alias:
+  pp: v1/pods
+  crb: rbac.authorization.k8s.io/v1/clusterrolebindings

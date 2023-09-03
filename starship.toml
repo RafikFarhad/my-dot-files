@@ -1,24 +1,19 @@
 # https://ahadsheriff.medium.com/developers-this-is-what-you-should-install-on-your-new-m1-mac-d90cd365c380
 format = """
-$kubernetes\
-$gcloud\
-$fill\
-$time\
-$line_break\
-$username\
-$hostname\
-$localip\
-$directory\
 $git_branch\
 $git_commit\
 $git_state\
 $git_metrics\
 $git_status\
+$gcloud\
+$kubernetes\
+$username\
+$hostname\
+$localip\
 $docker_context\
-$helm\
+$ruby\
 $nodejs\
 $python\
-$ruby\
 $terraform\
 $memory_usage\
 $env_var\
@@ -26,10 +21,14 @@ $custom\
 $sudo\
 $cmd_duration\
 $jobs\
+$container\
+$fill\
+$time\
 $line_break\
 $status\
-$container\
+$directory\
 $shell\
+$line_break\
 $character"""
 
 continuation_prompt = "▶▶ "
@@ -41,17 +40,25 @@ truncation_symbol = "…/"
 format = '\[[⏱ $duration]($style)\]'
 
 [docker_context]
-format = '\[[$symbol$context]($style)\]'
+format = '\[[$symbol$context](bright-cyan)\]'
 
 [gcloud]
-format = '\[[$symbol$project]($style)\]'
+format = '\[[$symbol$project](bright-blue)\]'
 disabled = false
+[gcloud.project_aliases]
+indigo-lotus-415 = 'gcp-lotus'
+stage-23704 = 'gcp-stage'
+apollo-ops = 'gcp-ops'
 
 [git_branch]
 format = '\[[$symbol$branch]($style)\]'
 
 [git_status]
 format = '([\[$all_status$ahead_behind\]]($style))'
+
+[git_commit]
+tag_disabled = false
+only_detached = true
 
 [golang]
 format = '\[[$symbol($version)]($style)\]'
@@ -63,29 +70,30 @@ format = '\[[$symbol($version)]($style)\]'
 format = '\[[$symbol($version)]($style)\]'
 
 [kubernetes]
-format = '\[[$symbol ($cluster)](green)\]'
+format = '\[[$symbol ($context)](purple)\]'
 symbol = "⛵️"
 disabled = false
-# detect_folders = ['helm', 'kubernetes']
+[kubernetes.context_aliases]
+'gke_.*_(.*)' = 'gke-$1'
 
 [memory_usage]
 format = '\[$symbol[$ram( | $swap)]($style)\]'
 
 [nodejs]
-format = '\[[$symbol($version)]($style)\]'
-disabled = true
+format = '\[[$symbol($version)](cyan)\]'
+disabled = false
 
 [php]
 format = '\[[$symbol($version)]($style)\]'
 disabled = true
 
 [python]
-format = '\[[${symbol}${pyenv_prefix}(${version})(\($virtualenv\))]($style)\]'
+format = '\[[${symbol}${pyenv_prefix}(${version})(\($virtualenv\))](yellow)\]'
 disabled = false
 
 [ruby]
-format = '\[[$symbol($version)]($style)\]'
-disabled = true
+format = '\[[$symbol($version)](green)\]'
+disabled = false
 
 [rust]
 format = '\[[$symbol($version)]($style)\]'

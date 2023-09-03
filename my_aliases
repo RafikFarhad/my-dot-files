@@ -25,10 +25,10 @@ alias gcl='git clone'
 alias gp='git push'
 alias gpl='git pull'
 alias gct='git checkout'
+alias glg='git log'
+alias sync_current_branch='git pull origin $(git rev-parse --abbrev-ref HEAD)'
 
-alias pp='cd ~/apollo'
-alias bb='cd ~/bitanon'
-alias de='cd ~/Desktop'
+alias de='cd ~/Desktop/Desktop'
 alias dc='cd ~/Documents'
 alias dd='cd ~/Downloads'
 
