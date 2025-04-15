@@ -23,10 +23,9 @@ alias ga='git add --all'
 alias gc='git commit -S -m'
 alias gcl='git clone'
 alias gp='git push'
-alias gpl='git pull'
+alias gpl='git pull origin $(git rev-parse --abbrev-ref HEAD)'
 alias gct='git checkout'
 alias glg='git log'
-alias sync_current_branch='git pull origin $(git rev-parse --abbrev-ref HEAD)'
 
 alias de='cd ~/Desktop/Desktop'
 alias dc='cd ~/Documents'
@@ -64,3 +63,8 @@ alias gg='gcloud'
 alias public_ip='curl -s -4 icanhazip.com'
 
 alias init_starship='eval "$(starship init zsh)"'
+
+alias choose_branch="git checkout \$(git for-each-ref --sort=-committerdate refs/heads/ --format='%(refname:short)' | fzf --preview='git log --color=always {} --')"
+
+alias go_to_latest_master="git fetch origin master && git checkout origin/master"
+alias go_to_latest_main="git fetch origin main && git checkout origin/main"

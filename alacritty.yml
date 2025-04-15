@@ -47,11 +47,11 @@ window:
 #   Blank space added around the window in pixels. This padding is scaled
 #   by DPI and the specified value is always added at both opposing sides.
   padding:
-   x: 5
+   x: 2
    y: 5
 
 #   Spread additional padding evenly around the terminal content.
-#   dynamic_padding: false
+  dynamic_padding: true
 
 #   Window decorations
   
@@ -62,13 +62,13 @@ window:
 #   Values for `decorations` (macOS only):
 #       - transparent: Title bar, transparent background and title bar buttons
 #       - buttonless: Title bar, transparent background and no title bar buttons
-#   decorations: full
+  # decorations: none
 
 #   Background opacity
   
 #   Window opacity as a floating point number from `0.0` to `1.0`.
 #   The value `0.0` is completely transparent and `1.0` is opaque.
-  opacity: 0.75
+  opacity: .95
 
 #   Startup Mode (changes require restart)
   
@@ -123,54 +123,11 @@ window:
 
 # Font configuration
 font:
-#   Normal (roman) font face
   normal:
-#     Font family
-    
-#     Default:
-#       - (macOS) Menlo
-#       - (Linux/BSD) monospace
-#       - (Windows) Consolas
-    family: FiraCode Nerd Font Mono
-
-#     The `style` can be specified to pick a specific face.
+    family: FiraCode Nerd Font Mono # termmono
     style: Regular
 
-#   Bold font face
-  bold:
-#     Font family
-    
-#     If the bold family is not specified, it will fall back to the
-#     value specified for the normal font.
-    family: FiraCode Nerd Font Mono
-
-#     The `style` can be specified to pick a specific face.
-    style: Bold
-
-#   Italic font face
-  italic:
-#     Font family
-    
-#     If the italic family is not specified, it will fall back to the
-#     value specified for the normal font.
-    family: FiraCode Nerd Font Mono
-
-#     The `style` can be specified to pick a specific face.
-    style: Italic
-
-#   Bold italic font face
-  bold_italic:
-#     Font family
-    
-#     If the bold italic family is not specified, it will fall back to the
-#     value specified for the normal font.
-    family: FiraCode Nerd Font Mono
-
-#     The `style` can be specified to pick a specific face.
-    style: Bold Italic
-
-#   Point size
-#   size: 11.0
+  size: 10.0
 
 #   Offset is the extra space around each character. `offset.y` can be thought
 #   of as modifying the line spacing, and `offset.x` as modifying the letter
@@ -268,13 +225,13 @@ theme: Dracula
   
 #   command: None
 
-# selection:
+selection:
 #   This string contains all characters that are used as separators for
 #   "semantic words" in Alacritty.
 #   semantic_escape_chars: ",│`|:\"' ()[]{}<>\t"
 
 #   When set to `true`, selected text will be copied to the primary clipboard.
-#   save_to_clipboard: false
+  save_to_clipboard: true
 
 cursor:
 #   Cursor style
@@ -332,8 +289,8 @@ cursor:
 # Default:
 #   - (Linux/BSD/macOS) `$SHELL` or the user's login shell, if `$SHELL` is unset
 #   - (Windows) powershell
-# shell:
-#  program: /bin/bash
+shell:
+ program: /bin/zsh
 #  args:
 #    - --login
 
@@ -356,7 +313,7 @@ cursor:
 #   triple_click: { threshold: 300 }
 
 #   If this is `true`, the cursor is temporarily hidden when typing.
-#   hide_when_typing: false
+  # hide_when_typing: false
 
 # Hints
 
@@ -650,7 +607,13 @@ cursor:
 
 # If the same trigger is assigned to multiple actions, all of them are executed
 # in the order they were defined in.
-# key_bindings:
+key_bindings:
+  - { key: Left,     mods: Alt,         chars: "\x1bb"                       } # Skip word left
+  - { key: Left,     mods: Command,     chars: "\x01"                        } # Skip to most left
+  - { key: Right,    mods: Alt,         chars: "\x1bf"                       } # Skip word right
+  - { key: Right,    mods: Command,     chars: "\x05"                        } # Skip to most right
+  - { key: Back,     mods: Command, chars: "\x15"                        } # Delete line
+  - { key: Back,     mods: Alt,     chars: "\x1b\x7f"                    } # Delete word
 #   - { key: Paste,                                       action: Paste          }
 #   - { key: Copy,                                        action: Copy           }
 #   - { key: L,         mods: Control,                    action: ClearLogNotice }
@@ -762,9 +725,9 @@ cursor:
 #   - { key: F,              mods: Command, mode: ~Search,     action: SearchForward         }
 #   - { key: B,              mods: Command, mode: ~Search,     action: SearchBackward        }
 
-# debug:
+debug:
 #   Display the time it takes to redraw each frame.
-#   render_timer: false
+  render_timer: false
 
 #   Keep the log file after quitting Alacritty.
 #   persistent_logging: false
@@ -791,4 +754,3 @@ cursor:
 
 #   Highlight window damage information.
 #   highlight_damage: false
-

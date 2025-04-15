@@ -1,5 +1,5 @@
 # $XDG_CONFIG_HOME/k9s/hotkey.yml
-hotKey:
+hotKeys:
   # Hitting Shift-0 navigates to your pod view
   shift-0:
     shortCut:    Shift-0

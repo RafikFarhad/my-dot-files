@@ -31,7 +31,7 @@ $shell\
 $line_break\
 $character"""
 
-continuation_prompt = "▶▶ "
+continuation_prompt = " "
 
 [directory]
 truncation_symbol = "…/"
@@ -70,7 +70,7 @@ format = '\[[$symbol($version)]($style)\]'
 format = '\[[$symbol($version)]($style)\]'
 
 [kubernetes]
-format = '\[[$symbol ($context)](purple)\]'
+format = '\[[$symbol ($context ${namespace})](purple)\]'
 symbol = "⛵️"
 disabled = false
 [kubernetes.context_aliases]
@@ -81,7 +81,7 @@ format = '\[$symbol[$ram( | $swap)]($style)\]'
 
 [nodejs]
 format = '\[[$symbol($version)](cyan)\]'
-disabled = false
+disabled = true
 
 [php]
 format = '\[[$symbol($version)]($style)\]'
@@ -109,6 +109,7 @@ disabled = false
 
 [terraform]
 format = '\[[$symbol$workspace]($style)\]'
+disabled = true
 
 [time]
 format = '\[[$time]($style)\]'
