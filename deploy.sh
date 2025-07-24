@@ -109,14 +109,14 @@ configure_helpers() {
 	# if ! test -f $HOME/service_manager.sh; then
 	# 	ln -s -f $(pwd)/legacy/service_manager.sh $HOME
 	# fi
-	if ! test -f $HOME/.aliases; then
-		ln -s -f $(pwd)/legacy/.aliases $HOME
-	fi
+	# if ! test -f $HOME/.aliases; then
+	# 	ln -s -f $(pwd)/my_aliases $HOME/.aliases
+	# fi
 	printf "${GREEN}Helpers configured${NORMAL}\n"
 }
 
 generate_conf() {
-	printf "source $(pwd)/zshrc.conf\nsource $(pwd)/legacy/.aliases\n" >$HOME/.zshrc
+	printf "source $(pwd)/zshrc.conf\nsource $(pwd)/my_aliases\n" >$HOME/.zshrc
 	printf "source $(pwd)/vimrc.conf" >$HOME/.vimrc
 	printf "source-file $(pwd)/tmux.conf" >$HOME/.tmux.conf
 	printf "${GREEN}Conf file generated to: ${HOME}${NORMAL}\n"
@@ -161,6 +161,16 @@ zsh_plugin_setup() {
 	else
 		git -C ""$HOME/.oh-my-zsh/custom/plugins/zsh-autosuggestions"" pull
 	fi
+	if ! test -d $HOME/.oh-my-zsh/custom/plugins/zsh-history-substring-search; then
+		git clone https://github.com/zsh-users/zsh-history-substring-search $HOME/.oh-my-zsh/custom/plugins/zsh-history-substring-search
+	else
+		git -C "$HOME/.oh-my-zsh/custom/plugins/zsh-history-substring-search" pull
+	fi
+	if ! test -d $HOME/.oh-my-zsh/custom/plugins/you-should-use; then
+		git clone https://github.com/MichaelAquilina/zsh-you-should-use.git $HOME/.oh-my-zsh/custom/plugins/you-should-use
+	else
+		git -C "$HOME/.oh-my-zsh/custom/plugins/you-should-use" pull
+	fi
 	printf "${GREEN}Zsh plugin setup complete${NORMAL}\n"
 }
 
@@ -203,17 +213,17 @@ main() {
 
 	check_for_software vim
 
-	check_for_software tmux
+	# check_for_software tmux
 
 	check_default_shell
 
 	backup_conf
 
-	configure_helpers
+	# configure_helpers
 
 	generate_conf
 
-	tmux_plugin_setup
+	# tmux_plugin_setup
 
 	zsh_plugin_setup
 
