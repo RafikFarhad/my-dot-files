@@ -18,6 +18,26 @@ function see() {
     eval "$* -o json | jq '.data | map_values(@base64d)'"
 }
 
+repeat_cmd() {
+  local GREEN="\033[1;32m"
+  local YELLOW="\033[1;33m"
+  local RED="\033[1;31m"
+  local RESET="\033[0m"
+
+  while true; do
+    "$@"
+    local exit_code=$?
+    
+    echo -e ""
+    echo -e "${YELLOW}─────────────────────────────────────────${RESET}"
+    echo -e "${RED}Command exited with code ${exit_code}.${RESET}"
+    echo -e "${GREEN}Restarting in 1 second...${RESET}"
+    echo -e "${YELLOW}─────────────────────────────────────────${RESET}"
+
+    sleep 1
+  done
+}
+
 alias gss='git status'
 alias ga='git add --all'
 alias gc='git commit -S -m'
@@ -66,5 +86,10 @@ alias init_starship='eval "$(starship init zsh)"'
 
 alias choose_branch="git checkout \$(git for-each-ref --sort=-committerdate refs/heads/ --format='%(refname:short)' | fzf --preview='git log --color=always {} --')"
 
-alias go_to_latest_master="git fetch origin master && git checkout origin/master"
-alias go_to_latest_main="git fetch origin main && git checkout origin/main"
+alias master_latest="git fetch origin master && git checkout origin/master"
+alias main_latest="git fetch origin main && git checkout origin/main"
+
+# shell helpers
+alias please='sudo $(history -p !!)'
+
+alias refresh_zsh='source ~/.zprofile'
