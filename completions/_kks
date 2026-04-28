@@ -1,0 +1,42 @@
+#compdef kks
+# zsh completion for kks. Source via fpath in ~/.zshrc:
+#   fpath=($HOME/.my-dot-files/completions $fpath)
+#   autoload -U compinit && compinit
+
+_kks() {
+  local -a contexts namespaces flags
+  flags=(
+    '--context[print kubectl --context= prefix instead of switching]'
+    '--refresh[bypass cache (or wipe all caches when alone)]'
+    '--init[verify kubectl/fzf dependencies]'
+    '--help[show help]'
+  )
+
+  contexts=(${(f)"$(kubectl config get-contexts -o name 2>/dev/null)"})
+  if [[ -f "$HOME/.kks/.last" ]]; then
+    contexts=('-:previous context' $contexts)
+  fi
+
+  if (( CURRENT == 2 )); then
+    _alternative \
+      "contexts:context:(($contexts))" \
+      "flags:flag:(($flags))"
+    return
+  fi
+
+  if (( CURRENT == 3 )); then
+    local current cache
+    current=$(kubectl config current-context 2>/dev/null)
+    cache="$HOME/.kks/${current//\//_}_namespaces"
+    if [[ -r "$cache" ]]; then
+      namespaces=(${=$(<$cache)})
+      _describe -t namespaces 'namespace' namespaces
+    fi
+    _alternative "flags:flag:(($flags))"
+    return
+  fi
+
+  _alternative "flags:flag:(($flags))"
+}
+
+_kks "$@"

@@ -1,0 +1,295 @@
+#!/usr/bin/env bash
+# kks - Kubernetes context switcher
+#
+# Usage:
+#   kks                              show current context/namespace status
+#   kks <search> [namespace]         switch context (and namespace)
+#   kks -                            switch back to previous context
+#   kks <search> --context           print `kubectl --context=...` (no switch)
+#   kks --context [namespace]        list every context as a kubectl prefix
+#   kks <search> [ns] -- <cmd...>    run <cmd> with --context/--namespace
+#                                    injected (no switch). Example:
+#                                      kks agent default -- get pods
+#   kks --refresh                    wipe all namespace caches
+#   kks <search> --refresh           bust the cache for that one context
+#   kks --init                       verify deps (kubectl, fzf)
+#
+# Matching:
+#   Context and namespace are case-insensitive substring matches against
+#   their respective lists (contexts from kubectl, namespaces from
+#   ~/.kks cache). Exact match wins; ambiguous match drops into an fzf
+#   picker for context, errors for namespace. Unknown namespaces print
+#   a warning but are applied — so you can reach a namespace not yet
+#   in cache.
+#
+# Cache:
+#   ~/.kks/<context>_namespaces — 1h TTL, --refresh busts.
+#   ~/.kks/.last — previous context, used by `kks -`.
+
+set -euo pipefail
+
+KKS_CACHE_DIR="$HOME/.kks"
+KKS_LAST_FILE="$KKS_CACHE_DIR/.last"
+KKS_NS_TTL_MIN=60
+
+usage() {
+  /usr/bin/sed -n '2,28p' "$0" | /usr/bin/sed 's/^# \{0,1\}//'
+  exit "${1:-1}"
+}
+
+# --- status (no args) ---------------------------------------------------
+if [[ $# -eq 0 ]]; then
+  current=$(kubectl config current-context 2>/dev/null || echo "(none)")
+  current_ns=$(kubectl config view --minify --output 'jsonpath={.contexts[0].context.namespace}' 2>/dev/null || true)
+  current_ns="${current_ns:-default}"
+  echo "Context:   $current"
+  echo "Namespace: $current_ns"
+  if [[ -f "$KKS_LAST_FILE" ]]; then
+    echo "Previous:  $(cat "$KKS_LAST_FILE")"
+  fi
+  cache_file="$KKS_CACHE_DIR/${current//\//_}_namespaces"
+  if [[ -f "$cache_file" ]]; then
+    # date -r <file> works on BSD and GNU; avoids `stat -f` collision
+    # with GNU stat's --file-system flag when gnubin is on PATH.
+    mtime=$(date -r "$cache_file" +%s 2>/dev/null || echo 0)
+    age_min=$(( ( $(date +%s) - mtime ) / 60 ))
+    echo "Cache:     ${age_min}m old (TTL ${KKS_NS_TTL_MIN}m)"
+  fi
+  exit 0
+fi
+
+# --- arg parsing --------------------------------------------------------
+search=""
+namespace=""
+output_context_only=false
+refresh=false
+init_mode=false
+exec_cmd=()
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --)
+      shift
+      exec_cmd=("$@")
+      break
+      ;;
+    --context)  output_context_only=true; shift ;;
+    --refresh)  refresh=true; shift ;;
+    --init)     init_mode=true; shift ;;
+    -h|--help)  usage 0 ;;
+    --*)        echo "Unknown flag: $1" >&2; usage ;;
+    -)
+      if [[ -z "$search" ]]; then
+        if [[ ! -f "$KKS_LAST_FILE" ]]; then
+          echo "No previous context recorded" >&2; exit 1
+        fi
+        search=$(cat "$KKS_LAST_FILE")
+      else
+        echo "Unexpected positional arg: -" >&2; usage
+      fi
+      shift
+      ;;
+    *)
+      if [[ -z "$search" ]]; then
+        search="$1"
+      elif [[ -z "$namespace" ]]; then
+        namespace="$1"
+      else
+        echo "Unexpected positional arg: $1" >&2; usage
+      fi
+      shift
+      ;;
+  esac
+done
+
+# Allow `kks agent -- kubectl get pods` (strip redundant leading kubectl).
+if [[ ${#exec_cmd[@]} -gt 0 && "${exec_cmd[0]}" == "kubectl" ]]; then
+  exec_cmd=("${exec_cmd[@]:1}")
+fi
+
+# --- --init -------------------------------------------------------------
+if [[ "$init_mode" == true ]]; then
+  ok=true
+  if command -v kubectl >/dev/null; then
+    echo "✓ kubectl: $(command -v kubectl)"
+  else
+    echo "✗ kubectl not found" >&2; ok=false
+  fi
+  if command -v fzf >/dev/null; then
+    echo "✓ fzf:     $(command -v fzf)"
+  else
+    echo "✗ fzf not found (brew install fzf)" >&2; ok=false
+  fi
+  mkdir -p "$KKS_CACHE_DIR" && echo "✓ cache:   $KKS_CACHE_DIR"
+  $ok && exit 0 || exit 1
+fi
+
+# --- --context with no search: list every context ----------------------
+if [[ "$output_context_only" == true && -z "$search" ]]; then
+  contexts=$(kubectl config get-contexts -o name 2>/dev/null || true)
+  [[ -z "$contexts" ]] && { echo "No kubectl contexts configured" >&2; exit 1; }
+  while IFS= read -r ctx; do
+    if [[ -n "$namespace" ]]; then
+      echo "kubectl --context=$ctx --namespace=$namespace"
+    else
+      echo "kubectl --context=$ctx"
+    fi
+  done <<<"$contexts"
+  exit 0
+fi
+
+# --- --refresh with no search: wipe caches -----------------------------
+if [[ -z "$search" && "$refresh" == true ]]; then
+  if [[ -d "$KKS_CACHE_DIR" ]]; then
+    count=$(/usr/bin/find "$KKS_CACHE_DIR" -maxdepth 1 -type f -name '*_namespaces' -delete -print 2>/dev/null | wc -l | tr -d ' ')
+    echo "✓ Cleared $count namespace cache file(s)"
+  else
+    echo "✓ No cache to clear"
+  fi
+  exit 0
+fi
+
+[[ -z "$search" ]] && usage
+
+# --- resolve context ---------------------------------------------------
+contexts=$(kubectl config get-contexts -o name 2>/dev/null || true)
+[[ -z "$contexts" ]] && { echo "No kubectl contexts configured" >&2; exit 1; }
+
+selected=""
+if grep -Fxq -- "$search" <<<"$contexts"; then
+  selected="$search"
+else
+  ranked=$(echo "$contexts" | grep -iF -- "$search" || true)
+  if [[ -z "$ranked" ]]; then
+    echo "No context matches '$search'" >&2
+    echo "Available:" >&2
+    echo "$contexts" | /usr/bin/sed 's/^/  /' >&2
+    exit 1
+  fi
+  if [[ $(echo "$ranked" | wc -l) -eq 1 ]]; then
+    selected="$ranked"
+  else
+    selected=$(echo "$ranked" | fzf \
+      --header="Multiple matches for '$search' — pick one" \
+      --prompt="Context> " --height=~50% --reverse --select-1 --query="")
+    [[ -z "$selected" ]] && { echo "Cancelled" >&2; exit 1; }
+  fi
+fi
+
+# --- helpers ------------------------------------------------------------
+
+# Echoes the namespace list (space-separated) for $selected to stdout,
+# fetching if cache is missing/stale. Returns non-zero on failure.
+load_ns_for_selected() {
+  mkdir -p "$KKS_CACHE_DIR"
+  local cache_file="$KKS_CACHE_DIR/${selected//\//_}_namespaces"
+  if [[ "$refresh" == false && -f "$cache_file" ]]; then
+    if [[ -n $(/usr/bin/find "$cache_file" -mmin "-${KKS_NS_TTL_MIN}" 2>/dev/null) ]]; then
+      cat "$cache_file"
+      return 0
+    fi
+  fi
+  echo "Fetching namespaces for $selected..." >&2
+  local fetched=""
+  if fetched=$(timeout 10 kubectl --context="$selected" get namespaces -o jsonpath='{.items[*].metadata.name}' 2>/dev/null) \
+     && [[ -n "$fetched" ]]; then
+    printf '%s\n' "$fetched" >"$cache_file"
+    printf '%s\n' "$fetched"
+    return 0
+  fi
+  return 1
+}
+
+# Substring-match $1 against the namespace pool ($2, space-separated).
+# Sets $resolved_ns. Returns non-zero on ambiguity.
+resolve_namespace() {
+  local input="$1" pool="$2" list ranked count
+  list=$(printf '%s' "$pool" | tr ' ' '\n' | grep -v '^$' || true)
+  if grep -Fxq -- "$input" <<<"$list"; then
+    resolved_ns="$input"; return 0
+  fi
+  ranked=$(echo "$list" | grep -iF -- "$input" || true)
+  count=$(printf '%s' "$ranked" | grep -c . || true)
+  if [[ "$count" -eq 1 ]]; then
+    resolved_ns="$ranked"
+    [[ "$resolved_ns" != "$input" ]] && echo "Resolved namespace '$input' → '$resolved_ns'" >&2
+    return 0
+  elif [[ "$count" -gt 1 ]]; then
+    echo "Ambiguous namespace '$input':" >&2
+    echo "$ranked" | /usr/bin/sed 's/^/  /' >&2
+    return 1
+  fi
+  echo "Warning: '$input' not in cached namespaces — applying anyway" >&2
+  resolved_ns="$input"; return 0
+}
+
+# Resolves $namespace into $resolved_ns by consulting the cache. Falls
+# back to the raw input if the cache can't be loaded.
+resolve_namespace_or_passthrough() {
+  resolved_ns="$namespace"
+  local pool
+  if pool=$(load_ns_for_selected); then
+    resolve_namespace "$namespace" "$pool" || exit 1
+  fi
+}
+
+# --- --context: emit and exit ------------------------------------------
+if [[ "$output_context_only" == true ]]; then
+  if [[ -n "$namespace" ]]; then
+    resolve_namespace_or_passthrough
+    echo "kubectl --context=$selected --namespace=$resolved_ns"
+  else
+    echo "kubectl --context=$selected"
+  fi
+  exit 0
+fi
+
+# --- --exec: run kubectl against $selected, no switch ------------------
+if [[ ${#exec_cmd[@]} -gt 0 ]]; then
+  ns_args=()
+  if [[ -n "$namespace" ]]; then
+    resolve_namespace_or_passthrough
+    ns_args=(--namespace="$resolved_ns")
+  fi
+  exec kubectl --context="$selected" "${ns_args[@]}" "${exec_cmd[@]}"
+fi
+
+# --- switch context (and stash previous) -------------------------------
+current=$(kubectl config current-context 2>/dev/null || true)
+if [[ "$selected" != "$current" ]]; then
+  if [[ -n "$current" ]]; then
+    mkdir -p "$KKS_CACHE_DIR"
+    printf '%s\n' "$current" >"$KKS_LAST_FILE"
+  fi
+  kubectl config use-context "$selected" >/dev/null
+fi
+
+# --- explicit namespace -----------------------------------------------
+if [[ -n "$namespace" ]]; then
+  resolve_namespace_or_passthrough
+  kubectl config set-context --current --namespace="$resolved_ns" >/dev/null
+  echo "✓ Context: $selected | Namespace: $resolved_ns"
+  exit 0
+fi
+
+# --- interactive namespace picker -------------------------------------
+current_ns=$(kubectl config view --minify --output 'jsonpath={.contexts[0].context.namespace}' 2>/dev/null || true)
+current_ns="${current_ns:-default}"
+
+if ! namespaces=$(load_ns_for_selected); then
+  echo "Could not fetch namespaces" >&2
+  echo "✓ Context: $selected (namespace unchanged: $current_ns)"
+  exit 0
+fi
+
+ns_list=$(echo "$namespaces" | tr ' ' '\n')
+ns_list=$( { echo "* $current_ns"; echo "$ns_list" | grep -v "^${current_ns}$" | /usr/bin/sed 's/^/  /'; } )
+
+ns=$(echo "$ns_list" | fzf \
+  --header="Current namespace: $current_ns" --prompt="Namespace> " \
+  --height=~50% --reverse --print-query | tail -1)
+ns=$(echo "$ns" | /usr/bin/sed 's/^[* ] //')
+ns="${ns:-default}"
+
+kubectl config set-context --current --namespace="$ns" >/dev/null
+echo "✓ Context: $selected | Namespace: $ns"

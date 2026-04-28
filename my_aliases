@@ -34,25 +34,33 @@ alias kkgs='kubectl get service'
 alias kkds='kubectl describe service'
 alias kkgi='kubectl get ingress'
 alias kkdi='kubectl describe ingress'
+alias kkghr='kubectl get HttpRoute'
+alias kkdh='kubectl describe HttpRoute'
 alias kkgsec='kubectl get secret'
 alias kkdsec='kubectl describe secret'
 alias kkgc='kubectl get configmap'
 alias kkdc='kubectl describe configmap'
 alias kkgdep='kubectl get deployment'
 alias kkddep='kubectl describe deployment'
+alias kklogs='kubectl logs -f'
+alias kkgn='kubectl get namespaces'
 
 alias gg='gcloud'
 
 alias public_ip='curl -s -4 icanhazip.com'
 
-alias init_starship='eval "$(starship init zsh)"'
+# alias init_starship='eval "$(starship init zsh)"'
 
 alias choose_branch="git checkout \$(git for-each-ref --sort=-committerdate refs/heads/ --format='%(refname:short)' | fzf --preview='git log --color=always {} --')"
 
 alias master_latest="git fetch origin master && git checkout origin/master"
 alias main_latest="git fetch origin main && git checkout origin/main"
+alias merge_latest_master="git fetch origin master && git merge origin/master"
+alias merge_latest_main="git fetch origin main && git merge origin/main"
+
+alias sshr='ssh-keygen -R'
 
 # shell helpers
 alias please='sudo $(history -p !!)'
 
-alias refresh_zsh='source ~/.zprofile'
+alias refresh_zsh='source ~/.zprofile && source ~/.zshrc'

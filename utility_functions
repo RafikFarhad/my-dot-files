@@ -39,135 +39,6 @@ repeat_cmd() {
 }
 
 
-# K8s context switcher with gum (brew install gum)
-kks() {
-  # 1. Check gum is installed
-  if ! command -v gum &>/dev/null; then
-    echo "Error: gum is not installed. Run: brew install gum"
-    return 1
-  fi
-
-  # Push content to bottom of terminal
-  printf '\n%.0s' $(seq 1 $(($(tput lines) - 12)))
-
-  # 2. Get and display current context
-  local current=$(kubectl config current-context 2>/dev/null)
-  gum style \
-    --border rounded \
-    --border-foreground 212 \
-    --padding "0 1" \
-    --margin "0 0 1 0" \
-    "🎯 Current: ${current:-none}"
-
-  # 3. Get available contexts
-  local contexts=("${(@f)$(kubectl config get-contexts -o name 2>/dev/null)}")
-
-  if [[ ${#contexts[@]} -eq 0 ]]; then
-    gum style --foreground 196 "No contexts found"
-    return 1
-  fi
-
-  # 4. Show selection menu with gum choose
-  #    Put current context at top with checkmark
-  local display_contexts=()
-  if [[ -n "$current" ]]; then
-    display_contexts+=("$current ✓")
-  fi
-  for ctx in "${contexts[@]}"; do
-    if [[ "$ctx" != "$current" ]]; then
-      display_contexts+=("$ctx")
-    fi
-  done
-
-  local selected=$(printf '%s\n' "${display_contexts[@]}" | gum filter \
-    --indicator="→" \
-    --reverse \
-    --header "Select context:" \
-    --header.foreground="15" \
-    --header.bold \
-    --prompt.foreground="15" \
-    --text.foreground="15" \
-    --cursor-text.foreground="10" \
-    --cursor-text.bold \
-    --match.foreground="13" \
-    --indicator.foreground="10" \
-    --placeholder.foreground="7")
-
-  # Handle cancel (Ctrl+C or empty selection)
-  if [[ -z "$selected" ]]; then
-    gum style --foreground 214 "Cancelled"
-    return 0
-  fi
-
-  # Remove the checkmark suffix if present
-  selected="${selected% ✓}"
-
-  echo ""
-  gum style --foreground 212 "Switching to: $selected"
-  echo ""
-
-  # 5. Switch context if different from current
-  if [[ "$selected" != "$current" ]]; then
-    if ! kubectl config use-context "$selected" &>/dev/null; then
-      gum style --foreground 196 "✗ Failed to switch to $selected"
-      return 1
-    fi
-  fi
-
-  # 6. Prompt for namespace - try to fetch from cluster first
-  local ns=""
-  local namespaces
-
-  if namespaces=$(timeout 5 kubectl get namespaces -o jsonpath='{.items[*].metadata.name}' 2>/dev/null); then
-    # Convert space-separated to newline-separated and filter
-    ns=$(echo "$namespaces" | tr ' ' '\n' | gum filter \
-      --indicator="→" \
-      --reverse \
-      --header "Select namespace:" \
-      --placeholder "Type to filter..." \
-      --header.foreground="15" \
-      --header.bold \
-      --prompt.foreground="15" \
-      --text.foreground="15" \
-      --cursor-text.foreground="10" \
-      --cursor-text.bold \
-      --match.foreground="13" \
-      --indicator.foreground="10" \
-      --placeholder.foreground="7")
-  else
-    gum style --foreground 214 "Could not fetch namespaces (timeout or error)"
-    ns=$(gum input \
-      --placeholder "Namespace (empty to skip)" \
-      --header "Enter namespace manually:")
-  fi
-
-  if [[ -n "$ns" ]]; then
-    if ! kubectl config set-context --current --namespace="$ns" &>/dev/null; then
-      gum style --foreground 196 "✗ Failed to set namespace $ns"
-      return 1
-    fi
-  fi
-
-  # 7. Show success message
-  echo ""
-  if [[ -n "$ns" ]]; then
-    gum style \
-      --border rounded \
-      --border-foreground 82 \
-      --foreground 82 \
-      --padding "0 1" \
-      "✓ Switched to $selected" \
-      "  Namespace: $ns"
-  else
-    gum style \
-      --border rounded \
-      --border-foreground 82 \
-      --foreground 82 \
-      --padding "0 1" \
-      "✓ Switched to $selected"
-  fi
-}
-
 # Activate a Python virtualenv by searching upwards
 activate_venv() {
   local venv_name="${1:-.venv}"
@@ -207,4 +78,22 @@ activate_venv() {
 
   echo "No virtualenv '$venv_name' found in current or parent directories."
   return 1
+}
+
+gen_random_password() {
+  local total_len=${1:-16}     # default total length
+  local group_len=${2:-4}      # default group size
+  local use_special=${3:-false}
+
+  local charset='A-Za-z0-9'
+  if [[ "$use_special" == "true" ]]; then
+    charset='A-Za-z0-9!@#$%^&*'
+  fi
+
+  # generate raw password
+  local raw
+  raw=$(openssl rand -base64 64 | tr -dc "$charset" | head -c "$total_len")
+
+  # format into groups
+  echo "$raw" | /usr/bin/sed -E "s/(.{$group_len})/\1-/g; s/-$//"
 }
