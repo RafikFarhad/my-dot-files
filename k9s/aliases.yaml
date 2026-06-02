@@ -1,5 +1,9 @@
 aliases:
   dp: deployments
+  svc: services
+  gw: gateways
+  ing: ingresses
+  hr: httproutes
   sec: v1/secrets
   jo: jobs
   cr: clusterroles
@@ -8,3 +12,7 @@ aliases:
   rb: rolebindings
   np: networkpolicies
   pp: v1/pods
+  sbc: sandboxclaims
+  sb: sandboxes
+  sbt: sandboxtemplates
+  sbwp: sandboxwarmpools

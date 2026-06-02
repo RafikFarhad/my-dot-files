@@ -13,6 +13,8 @@
 #   kks --refresh                    wipe all namespace caches
 #   kks <search> --refresh           bust the cache for that one context
 #   kks --init                       verify deps (kubectl, fzf)
+#   kks --gke                        fetch credentials for all GKE clusters
+#   kks --all                        pick from all contexts interactively
 #
 # Matching:
 #   Context and namespace are case-insensitive substring matches against
@@ -31,9 +33,10 @@ set -euo pipefail
 KKS_CACHE_DIR="$HOME/.kks"
 KKS_LAST_FILE="$KKS_CACHE_DIR/.last"
 KKS_NS_TTL_MIN=60
+KKS_GKE_EXCLUDE="${KKS_GKE_EXCLUDE:-}"  # prefix pattern to exclude from --gke (e.g. "^sys-")
 
 usage() {
-  /usr/bin/sed -n '2,28p' "$0" | /usr/bin/sed 's/^# \{0,1\}//'
+  /usr/bin/sed -n '2,30p' "$0" | /usr/bin/sed 's/^# \{0,1\}//'
   exit "${1:-1}"
 }
 
@@ -49,8 +52,6 @@ if [[ $# -eq 0 ]]; then
   fi
   cache_file="$KKS_CACHE_DIR/${current//\//_}_namespaces"
   if [[ -f "$cache_file" ]]; then
-    # date -r <file> works on BSD and GNU; avoids `stat -f` collision
-    # with GNU stat's --file-system flag when gnubin is on PATH.
     mtime=$(date -r "$cache_file" +%s 2>/dev/null || echo 0)
     age_min=$(( ( $(date +%s) - mtime ) / 60 ))
     echo "Cache:     ${age_min}m old (TTL ${KKS_NS_TTL_MIN}m)"
@@ -64,6 +65,8 @@ namespace=""
 output_context_only=false
 refresh=false
 init_mode=false
+gke_mode=false
+all_mode=false
 exec_cmd=()
 
 while [[ $# -gt 0 ]]; do
@@ -76,6 +79,8 @@ while [[ $# -gt 0 ]]; do
     --context)  output_context_only=true; shift ;;
     --refresh)  refresh=true; shift ;;
     --init)     init_mode=true; shift ;;
+    --gke)      gke_mode=true; shift ;;
+    --all)      all_mode=true; shift ;;
     -h|--help)  usage 0 ;;
     --*)        echo "Unknown flag: $1" >&2; usage ;;
     -)
@@ -120,8 +125,58 @@ if [[ "$init_mode" == true ]]; then
   else
     echo "✗ fzf not found (brew install fzf)" >&2; ok=false
   fi
+  if command -v gcloud >/dev/null; then
+    echo "✓ gcloud:  $(command -v gcloud)"
+  else
+    echo "✗ gcloud not found (optional, needed for --gke)" >&2
+  fi
   mkdir -p "$KKS_CACHE_DIR" && echo "✓ cache:   $KKS_CACHE_DIR"
   $ok && exit 0 || exit 1
+fi
+
+# --- --gke: fetch credentials for all GKE clusters --------------------
+if [[ "$gke_mode" == true ]]; then
+  if ! command -v gcloud >/dev/null; then
+    echo "✗ gcloud not found — install Google Cloud SDK" >&2; exit 1
+  fi
+  if [[ -n "$KKS_GKE_EXCLUDE" ]]; then
+    echo "Fetching GCP projects (excluding ${KKS_GKE_EXCLUDE})..."
+    projects=$(gcloud projects list --format='value(projectId)' 2>/dev/null | grep -vE "$KKS_GKE_EXCLUDE" || true)
+  else
+    echo "Fetching GCP projects..."
+    projects=$(gcloud projects list --format='value(projectId)' 2>/dev/null || true)
+  fi
+  if [[ -z "$projects" ]]; then
+    echo "No GCP projects found (check: gcloud auth login)" >&2; exit 1
+  fi
+  success=0; fail=0
+  while IFS= read -r project; do
+    echo "▸ $project"
+    clusters=$(gcloud container clusters list \
+      --project="$project" \
+      --format='csv[no-heading](name,location)' 2>/dev/null || true)
+    if [[ -z "$clusters" ]]; then
+      echo "  (no GKE clusters)"
+      continue
+    fi
+    while IFS=',' read -r cluster_name location; do
+      [[ -z "$cluster_name" ]] && continue
+      printf '  %-40s (%s) ... ' "$cluster_name" "$location"
+      if gcloud container clusters get-credentials "$cluster_name" \
+           --project="$project" \
+           --location="$location" \
+           --quiet 2>/dev/null; then
+        echo "✓"
+        (( success += 1 )) || true
+      else
+        echo "✗"
+        (( fail += 1 )) || true
+      fi
+    done <<< "$clusters"
+  done <<< "$projects"
+  echo ""
+  echo "Done: ${success} credential(s) fetched, ${fail} failed"
+  exit 0
 fi
 
 # --- --context with no search: list every context ----------------------
@@ -149,30 +204,35 @@ if [[ -z "$search" && "$refresh" == true ]]; then
   exit 0
 fi
 
-[[ -z "$search" ]] && usage
+[[ -z "$search" && "$all_mode" != true ]] && usage
 
-# --- resolve context ---------------------------------------------------
-contexts=$(kubectl config get-contexts -o name 2>/dev/null || true)
-[[ -z "$contexts" ]] && { echo "No kubectl contexts configured" >&2; exit 1; }
-
+# --- resolve context (skipped for --all) --------------------------------
 selected=""
-if grep -Fxq -- "$search" <<<"$contexts"; then
-  selected="$search"
-else
-  ranked=$(echo "$contexts" | grep -iF -- "$search" || true)
-  if [[ -z "$ranked" ]]; then
-    echo "No context matches '$search'" >&2
-    echo "Available:" >&2
-    echo "$contexts" | /usr/bin/sed 's/^/  /' >&2
-    exit 1
-  fi
-  if [[ $(echo "$ranked" | wc -l) -eq 1 ]]; then
-    selected="$ranked"
+if [[ "$all_mode" != true ]]; then
+  contexts=$(kubectl config get-contexts -o name 2>/dev/null || true)
+  [[ -z "$contexts" ]] && { echo "No kubectl contexts configured" >&2; exit 1; }
+
+  if grep -Fxq -- "$search" <<<"$contexts"; then
+    selected="$search"
   else
-    selected=$(echo "$ranked" | fzf \
-      --header="Multiple matches for '$search' — pick one" \
-      --prompt="Context> " --height=~50% --reverse --select-1 --query="")
-    [[ -z "$selected" ]] && { echo "Cancelled" >&2; exit 1; }
+    # tier 1: substring match
+    ranked=$(echo "$contexts" | grep -iF -- "$search" || true)
+    # tier 2: fuzzy fallback only when substring finds nothing
+    [[ -z "$ranked" ]] && ranked=$(echo "$contexts" | fzf --filter="$search" --no-sort 2>/dev/null || true)
+    if [[ -z "$ranked" ]]; then
+      echo "No context matches '$search'" >&2
+      echo "Available:" >&2
+      echo "$contexts" | /usr/bin/sed 's/^/  /' >&2
+      exit 1
+    fi
+    if [[ $(echo "$ranked" | wc -l) -eq 1 ]]; then
+      selected="$ranked"
+    else
+      selected=$(echo "$ranked" | fzf \
+        --header="Multiple matches for '$search' — pick one" \
+        --prompt="Context> " --height=~50% --reverse --select-1 --query="")
+      [[ -z "$selected" ]] && { echo "Cancelled" >&2; exit 1; }
+    fi
   fi
 fi
 
@@ -232,6 +292,48 @@ resolve_namespace_or_passthrough() {
     resolve_namespace "$namespace" "$pool" || exit 1
   fi
 }
+
+# --- --all: pick from all contexts interactively -----------------------
+if [[ "$all_mode" == true ]]; then
+  all_contexts=$(kubectl config get-contexts -o name 2>/dev/null || true)
+  [[ -z "$all_contexts" ]] && { echo "No kubectl contexts configured" >&2; exit 1; }
+  ctx_count=$(echo "$all_contexts" | wc -l | tr -d ' ')
+  selected=$(echo "$all_contexts" | fzf \
+    --header="All contexts (${ctx_count} total) — pick one" \
+    --prompt="Context> " --height=~50% --reverse)
+  [[ -z "$selected" ]] && { echo "Cancelled" >&2; exit 1; }
+
+  current=$(kubectl config current-context 2>/dev/null || true)
+  if [[ "$selected" != "$current" ]]; then
+    if [[ -n "$current" ]]; then
+      mkdir -p "$KKS_CACHE_DIR"
+      printf '%s\n' "$current" >"$KKS_LAST_FILE"
+    fi
+    kubectl config use-context "$selected" >/dev/null
+  fi
+
+  current_ns=$(kubectl config view --minify --output 'jsonpath={.contexts[0].context.namespace}' 2>/dev/null || true)
+  current_ns="${current_ns:-default}"
+
+  if ! namespaces=$(load_ns_for_selected); then
+    echo "Could not fetch namespaces" >&2
+    echo "✓ Context: $selected (namespace unchanged: $current_ns)"
+    exit 0
+  fi
+
+  ns_list=$(echo "$namespaces" | tr ' ' '\n')
+  ns_list=$( { echo "* $current_ns"; echo "$ns_list" | grep -v "^${current_ns}$" | /usr/bin/sed 's/^/  /'; } )
+
+  ns=$(echo "$ns_list" | fzf \
+    --header="Current namespace: $current_ns" --prompt="Namespace> " \
+    --height=~50% --reverse --print-query | tail -1)
+  ns=$(echo "$ns" | /usr/bin/sed 's/^[* ] //')
+  ns="${ns:-default}"
+
+  kubectl config set-context --current --namespace="$ns" >/dev/null
+  echo "✓ Context: $selected | Namespace: $ns"
+  exit 0
+fi
 
 # --- --context: emit and exit ------------------------------------------
 if [[ "$output_context_only" == true ]]; then
