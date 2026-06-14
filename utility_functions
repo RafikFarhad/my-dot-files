@@ -80,6 +80,56 @@ activate_venv() {
   return 1
 }
 
+create_tab_config() {
+  local folder="${1:?Usage: create_tab_config FOLDER_PATH}"
+  local abs_folder="${folder:A}"
+  local name="${abs_folder:t}"
+  local slug="${name:l:gs/ /_/}"
+  local out="$HOME/.warp/tab_configs/auto-tab-config-${slug}.toml"
+
+  if [[ ! -d "$abs_folder" ]]; then
+    echo "Error: '$abs_folder' is not a directory." >&2
+    return 1
+  fi
+
+  if [[ -f "$out" ]]; then
+    echo "Error: '$out' already exists." >&2
+    return 1
+  fi
+
+  cat > "$out" <<TOML
+name = "Tab for - ${abs_folder/#$HOME/~}"
+
+[[panes]]
+id = "root"
+split = "horizontal"
+children = ["left", "right_stack"]
+
+[[panes]]
+id = "left"
+type = "terminal"
+directory = "${abs_folder}"
+is_focused = true
+
+[[panes]]
+id = "right_stack"
+split = "vertical"
+children = ["top_right", "bottom_right"]
+
+[[panes]]
+id = "top_right"
+type = "terminal"
+directory = "${abs_folder}"
+
+[[panes]]
+id = "bottom_right"
+type = "terminal"
+directory = "${abs_folder}"
+TOML
+
+  echo "Created: $out"
+}
+
 gen_random_password() {
   local total_len=${1:-16}     # default total length
   local group_len=${2:-4}      # default group size

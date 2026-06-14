@@ -1,0 +1,33 @@
+name = "Basic"
+title = "{{folder}}"
+color = "blue"
+
+[[panes]]
+id = "root"
+split = "horizontal"
+children = ["left", "right_stack"]
+
+[[panes]]
+id = "left"
+type = "terminal"
+directory = "{{folder}}"
+is_focused = true
+
+[[panes]]
+id = "right_stack"
+split = "vertical"
+children = ["top_right", "bottom_right"]
+
+[[panes]]
+id = "top_right"
+type = "terminal"
+directory = "{{folder}}"
+
+[[panes]]
+id = "bottom_right"
+type = "terminal"
+directory = "{{folder}}"
+
+[params.folder]
+type = "text"
+description = "Folder path"
