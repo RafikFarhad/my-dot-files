@@ -15,11 +15,11 @@ k9s:
   portForwardAddress: localhost
   ui: # NOTE! [K9s v0.30.0]
     # Enable mouse support. Default false
-    enableMouse: true
+    enableMouse: false
     # Set to true to hide K9s header. Default false
     headless: false
     # Set to true to hide K9s logo. Default false
-    logoless: false
+    logoless: true
     # Set to true to hide K9s crumbs. Default false
     crumbsless: false
     # Toggles reactive UI. This option provide for watching on disk artifacts changes and update the UI live  Defaults to false.
@@ -51,12 +51,10 @@ k9s:
       # Exclude the following namespaces for image vulscans!
       namespaces:
         - kube-system
-        - fred
       # Exclude pods with the following labels from image vulscans!
       labels:
         k8s-app:
           - kindnet
-          - bozo
         env:
           - dev
   # Logs configuration
