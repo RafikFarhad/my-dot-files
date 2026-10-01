@@ -51,8 +51,8 @@ notebook_font_size = 14.0
 app_icon = "sticker"
 
 [appearance.window]
-override_opacity = 59
-override_blur = 33
+override_opacity = 72
+override_blur = 45
 zoom_level = 90
 
 [appearance.panes]
@@ -60,13 +60,26 @@ should_dim_inactive_panes = true
 focus_pane_on_hover = true
 
 [appearance.themes]
-theme = "fancy_dracula"
+theme = "dark"
+system_theme = false
 
 [appearance.vertical_tabs]
-enabled = false
+enabled = true
+show_panel_in_restored_windows = false
+view_mode = "expanded"
+primary_info = "command"
+show_pr_link = true
+show_diff_stats = true
 
 [appearance.input]
 input_mode = "waterfall"
+
+[appearance.tabs]
+directory_tab_colors = {
+  "/Users/farhad/apollo/deployments" = { color = "cyan" },
+  "/Users/farhad/apollo/devops" = { color = "blue" },
+  "/Users/farhad/apollo/leadgenie" = { color = "yellow" },
+}
 
 [agents]
 cloud_conversation_storage_enabled = false
@@ -77,12 +90,20 @@ is_any_ai_enabled = false
 [agents.warp_agent.input]
 nld_in_terminal_enabled = true
 
+[agents.warp_agent.other]
+show_agent_notifications = true
+show_conversation_history = true
+
 [agents.third_party]
+should_render_cli_agent_toolbar = true
+auto_open_composer_on_cli_agent_start = true
+auto_dismiss_composer_after_submit = true
+submit_on_ctrl_enter = true
 
 [agents.third_party.cli_agent_toolbar_chip_selection_setting]
 
 [agents.third_party.cli_agent_toolbar_chip_selection_setting.custom]
-left = ["file_attach", { context_chip = "git_diff_stats" }, "file_explorer"]
+left = ["file_attach", { context_chip = "git_diff_stats" }, "file_explorer", "rich_input"]
 right = [
   { context_chip = "working_directory" },
   { context_chip = "shell_git_branch" },
@@ -90,12 +111,54 @@ right = [
   { context_chip = "kubernetes_context" },
 ]
 
+[agents.execution_profiles]
+
+[agents.execution_profiles.default]
+apply_code_diffs = "agent_decides"
+ask_user_question = "always_ask"
+autosync_plans_to_warp_drive = true
+command_allowlist = []
+command_denylist = [
+  'bash(\s.*)?',
+  'fish(\s.*)?',
+  'pwsh(\s.*)?',
+  'sh(\s.*)?',
+  'zsh(\s.*)?',
+  'curl(\s.*)?',
+  'eval(\s.*)?',
+  'exec(\s.*)?',
+  'source(\s.*)?',
+  'wget(\s.*)?',
+  'dig(\s.*)?',
+  'nslookup(\s.*)?',
+  'host(\s.*)?',
+  'ssh(\s.*)?',
+  'scp(\s.*)?',
+  'rsync(\s.*)?',
+  'telnet(\s.*)?',
+  'rm(\s.*)?',
+]
+computer_use = "never"
+directory_allowlist = []
+execute_commands = "always_ask"
+mcp_allowlist = []
+mcp_denylist = []
+mcp_permissions = "agent_decides"
+name = "Default"
+read_files = "agent_decides"
+run_agents = "always_ask"
+web_search_enabled = true
+write_to_pty = "always_ask"
+
 [general]
 quit_on_last_window_closed = true
 new_tab_placement = "after_all_tabs"
+default_session_mode = "agent"
 
 [terminal]
 use_audible_bell = true
+osc52_clipboard_access = "read_write"
+copy_on_select = true
 
 [terminal.input]
 alias_expansion_enabled = true
@@ -110,6 +173,9 @@ show_global_workflows_in_universal_search = true
 [code.editor]
 open_file_editor = "env_editor"
 open_code_panels_file_editor = "env_editor"
+show_code_review_button = true
+show_project_explorer = true
+show_global_search = true
 
 [notifications]
 toast_duration_secs = 8
@@ -127,10 +193,18 @@ play_notification_sound = true
 
 [warpify.ssh]
 use_ssh_tmux_wrapper = false
-enable_legacy_ssh_wrapper = false
+enable_legacy_ssh_wrapper = true
+ssh_extension_install_mode = "always_ask"
+enable_ssh_warpification = false
+
+[warpify.subshells]
+added_subshell_commands = ["sshw"]
 
 [account]
 is_settings_sync_enabled = true
 
 [accessibility]
 accessibility_verbosity = "concise"
+
+[warp_drive]
+enabled = true

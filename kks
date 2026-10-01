@@ -22,7 +22,8 @@
 #   ~/.kks cache). Exact match wins; ambiguous match drops into an fzf
 #   picker for context, errors for namespace. Unknown namespaces print
 #   a warning but are applied — so you can reach a namespace not yet
-#   in cache.
+#   in cache. Add $ to a context search to anchor its final fuzzy
+#   character to the end of the context (for example: sta2370stag$).
 #
 # Cache:
 #   ~/.kks/<context>_namespaces — 1h TTL, --refresh busts.
@@ -67,6 +68,7 @@ refresh=false
 init_mode=false
 gke_mode=false
 all_mode=false
+end_anchored=false
 exec_cmd=()
 
 while [[ $# -gt 0 ]]; do
@@ -106,6 +108,12 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+if [[ "$search" == *'$' ]]; then
+  end_anchored=true
+  search="${search%\$}"
+  [[ -z "$search" ]] && { echo "Context search cannot be only '$'" >&2; exit 1; }
+fi
 
 # Allow `kks agent -- kubectl get pods` (strip redundant leading kubectl).
 if [[ ${#exec_cmd[@]} -gt 0 && "${exec_cmd[0]}" == "kubectl" ]]; then
@@ -212,13 +220,20 @@ if [[ "$all_mode" != true ]]; then
   contexts=$(kubectl config get-contexts -o name 2>/dev/null || true)
   [[ -z "$contexts" ]] && { echo "No kubectl contexts configured" >&2; exit 1; }
 
-  if grep -Fxq -- "$search" <<<"$contexts"; then
+  context_pool="$contexts"
+  if [[ "$end_anchored" == true ]]; then
+    last_char="${search: -1}"
+    context_pool=$(echo "$contexts" | awk -v last_char="$last_char" \
+      'tolower(substr($0, length($0), 1)) == tolower(last_char)')
+  fi
+
+  if grep -Fxq -- "$search" <<<"$context_pool"; then
     selected="$search"
   else
     # tier 1: substring match
-    ranked=$(echo "$contexts" | grep -iF -- "$search" || true)
+    ranked=$(echo "$context_pool" | grep -iF -- "$search" || true)
     # tier 2: fuzzy fallback only when substring finds nothing
-    [[ -z "$ranked" ]] && ranked=$(echo "$contexts" | fzf --filter="$search" --no-sort 2>/dev/null || true)
+    [[ -z "$ranked" ]] && ranked=$(echo "$context_pool" | fzf --filter="$search" --no-sort 2>/dev/null || true)
     if [[ -z "$ranked" ]]; then
       echo "No context matches '$search'" >&2
       echo "Available:" >&2

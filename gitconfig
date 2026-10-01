@@ -1,0 +1,14 @@
+[include]
+	path = ~/.gitconfig.local
+
+[gpg]
+	format = ssh
+
+[gpg "ssh"]
+	allowedSignersFile = ~/.ssh/allowed_signers
+
+[core]
+	excludesfile = ~/.gitignore_global
+
+[commit]
+	gpgsign = true
